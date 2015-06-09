@@ -258,7 +258,27 @@ AssignmentMarks <- function(ID = 111111111, date = Sys.Date()) {
       for (i in uniqueA) {
             aMarks[i,] <- IDToAssignmentMark(ID, i)
       }
-      aMarks
+      return(aMarks)
+}
+
+TestMarks <- function(ID = 111111111, date = Sys.Date()) {
+      allMC <- readMCAnswers()
+      allLF <- readLongformGrades()
+      uniqueT <- unique(c(unique(allMC$examNumber[allMC$date <= date])), unique(allLF$examNumber[allLF$date <= date]))
+      tMarks <- matrix(ncol = 2, nrow = length(uniqueT))
+      colnames(tMarks) = c("mark", "outOf")
+      rownames(tMarks) = uniqueT
+      uniqueT
+      tMarks
+      for (i in uniqueT) {
+            tMarks[i,] <- IDAndExamNumberToGrade(ID, i)
+      }
+      for (i in nrow(tMarks):1) {
+            if (is.na(tMarks[i,2]) || tMarks[i,2] == 0) {
+                  tMarks <- tMarks[-i,]
+            }
+      }
+      return(tMarks)
 }
 
 # Do it simpler.
