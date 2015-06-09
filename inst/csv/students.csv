@@ -1,0 +1,11 @@
+ID,email,lastName,givenNames,program,notes
+111111111,abee@uwo.ca,ay,bee,actuarial science,first entry
+222222222,cdeedou@uwo.ca,cee,deedoublename,actuarial science,first of two with same names
+333333333,cdeedou2@uwo.ca,cee,deedoublename,statistics,second of two with same names
+444444444,gaitch@uwo.ca,gee,aitch,statistics,
+555555555,ajay@uwo.ca,aye,jay,statistics,
+666666666,kell@uwo.ca,kay,ell,financial modelling,
+777777777,eenn@uwo.ca,emm,enn,financial modelling,
+888888888,opee@uwo.ca,oh,pee,actuarial science,
+999999999,,,,,correct answers
+123456789,eteelon@uwo.ca,ess,teelongname,financial modelling,"breaks pattern: id, name length"
