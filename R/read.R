@@ -286,64 +286,31 @@ TestMarks <- function(ID = 111111111, date = Sys.Date()) {
 
 # Murdoch: After each test, write script that handles grading, entering into masterspreadsheet.
 
-IDToCurrentGrade <- function(ID = 111111111, totalWeighting = c(0.2, 0, 0.3, 0.5), outOf = "all", cpWeighting = c(0.5, 0.5), attendanceMethod = "toDate", questionMethod = c("answer", "percent")) {
+IDToCurrentGrade <- function(ID = 111111111, totalWeighting = c(0.2, 0, 0.3, 0.5), date = Sys.Date(), cpWeighting = c(0.5, 0.5), attendanceMethod = "toDate", questionMethod = c("answer", "percent")) {
       # 1   Determine weighting (eg. assignments = .2, exams = .5)
       #                              Default:   20% Assignments
       #                                          0% Participation
       #                                         30% Tests
       #                                         50% Final
-      #           Should default be out of all marks to date      "toDate", 
-      #                 ALL possible marks                        "all", 
-      #### Not implemented:   only the elements completed               "completed", 
-      #                 or other specific elements                "other"?
+      #           Should default be out of all marks to date = Sys.Date() ? 
       
       # 2   Fetch all the grades -- assignments, tests, participation, etc.
-      
       # 2.1 Fetch assignments
-      
-      #toDate, "all", and "other" options
-      if (outOf == "all") {
-            outOf <- Sys.Date()
-      }
-      
-      allA <- readAssignments()
-      aMarks <- matrix(ncol = 2, nrow = length(unique(allA$assignmentNumber[allA$date <= outOf])))
-      colnames(aMarks) = c("mark", "outOf")
-      rownames(aMarks) = unique(allA$assignmentNumber[allA$date <= outOf])
-      for (i in unique(allA$assignmentNumber[allA$date <= outOf])) {
-            aMarks[i,] <- IDToAssignmentMark(ID, i)
-      }
-      aMarks
+      a <- AssignmentMarks(ID, date)
       
       # 2.2 Fetch tests
-      
-      allMC <- readMCAnswers()
-      allLF <- readLongformGrades()
-      tMarks <- matrix(ncol = 2, nrow = length(unique(c(unique(allMC$examNumber[allMC$date <= outOf])), unique(allLF$examNumber[allLF$date <= outOf]))))
-      unique(c(unique(allMC$examNumber[allMC$date <= outOf])), unique(allLF$examNumber[allLF$date <= outOf]))
-      colnames(tMarks) = c("mark", "outOf")
-      rownames(tMarks) = unique(c(unique(allMC$examNumber[allMC$date <= outOf]), unique(allLF$examNumber[allLF$date <= outOf])))
-      for (i in unique(c(unique(allMC$examNumber[allMC$date <= outOf]), unique(allLF$examNumber[allLF$date <= outOf])))) {
-            tMarks[i,] <- IDAndExamNumberToGrade(ID, i)
-      }
-      for (i in nrow(tMarks):1) {
-            if (!is.na(tMarks[i,2]) && tMarks[i,2] > 0) {
-                  final <- i
-                  break
-            }
-      }
+      t <- TestMarks(ID, date)
       
       # 2.3 Fetch class participation
-      
-      cpMark <- IDToClassParticipation(ID = ID, date = outOf, cpWeighting = cpWeighting, attendanceMethod = attendanceMethod, questionMethod = questionMethod)
+      c <- IDToClassParticipation(ID, date, cpWeighting, attendanceMethod, questionMethod)
       
       # 3   Weight grades according to weighting function.
+      aw <- sum(a[,1])/sum(a[,2]) * totalWeighting[1]
+      cw <- c * totalWeighting[2]
+      tw <- sum(t[-nrow(t), 1], na.rm = TRUE) / sum(t[-nrow(t), 2]) * totalWeighting[3] # Tests excluding final.
+      ew <- t[nrow(t), 1]/ t[nrow(t), 2] * totalWeighting[4] # Final test/ exam.
       
-      aw <- sum(aMarks[,1])/sum(aMarks[,2]) * totalWeighting[1]
-      cw <- cpMark * totalWeighting[2]
-      tw <- sum(tMarks[-final,1], na.rm = TRUE) / sum(tMarks[-final,2]) * totalWeighting[3]
-      ew <- tMarks[final,1]/tMarks[final,2] * totalWeighting[4]
-      return(sum(aw, cw, tw, ew))
+      return(sum(aw, cw, tw, ew, na.rm = TRUE))
 }
 
 # What are my notes on this student?
