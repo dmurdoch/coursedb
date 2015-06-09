@@ -165,6 +165,38 @@ IDToQuestionsAsked <- function(ID = 111111111, date = Sys.Date(), evalMethod = "
       return(qGrade)
 }
 
+
+IDToQuestionsAnswered <- function(ID = 111111111, date = Sys.Date(), evalMethod = "percent") {
+      #     Default evaluation method:
+      #     Find the maximum number of questions answered.  
+      #     Find the percentage of that maximum that the given ID answered.
+      #     Alternate: 100% if >= evalMethod (a number) questions were answered.
+      ID <- as.data.frame(ID)
+      c <- dbGetPreparedQuery(conn = DBconn(), 
+                              "SELECT date, questionAnswered
+                              FROM classParticipation AS c
+                              WHERE c.ID = :ID",
+                              bind.data = ID)
+      qs <- sum(c$questionAnswered[c$date <= date] != "")
+      if (is.numeric(evalMethod)) {
+            qGrade <- c(questionsAnswered = qs, mark = 0, threshold = evalMethod)
+            if (qs >= evalMethod) {qGrade[2] <- 1} 
+      } else {
+            if (evalMethod != "percent") {warning("Invalid evalMethod; defaulting to 'percent'.")}
+            allQs <- dbGetQuery(conn = DBconn(),
+                                "SELECT ID, questionAnswered 
+                                FROM classParticipation as c
+                                ORDER BY c.ID")
+            potentialQs <- qs
+            for (i in unique(allQs$ID)) {
+                  currentID <- sum(allQs$questionAnswered[allQs$ID == i] != "")
+                  if (currentID > potentialQs) {potentialQs <- currentID}
+            }
+            qGrade <- c(questionsAnswered = qs, percentage = qs/potentialQs)
+      }
+      return(qGrade)
+}
+
 # Seperate functions for each kind of participation grade
 # Keep track of attendance: use this function; 
 # Keep track of Q, use this.
