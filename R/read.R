@@ -228,93 +228,25 @@ IDToCombinedQuestions <- function(ID = 111111111, date = Sys.Date(), evalMethod 
       return(qGrade)
 }
 
-# Seperate functions for each kind of participation grade
-# Keep track of attendance: use this function; 
-# Keep track of Q, use this.
-# Keep track of A, use this.
-
 IDToClassParticipation <- function(ID = 111111111, date = Sys.Date(), cpWeighting = c(0.5,0.5), attendanceMethod = "toDate", questionMethod = c("answer", "percent")) {
-      # Weighting default: .5 attendance, .5 questions answered, 0 questions asked
+      # Weighting default: .5 attendance, .5 questions
       if (is.numeric(cpWeighting) != TRUE) {
             warning("IDToClassParticipation requires 'cpWeighting' to be a vector of two numbers; defaulting to c(0.5, 0.5).")
             cpWeighting <- c(0.5, 0.5)
       }
-      # Attendance weighting default: % of dates so far attended; otherwise x/y(specified), capped at 1.
-      ID <- as.data.frame(ID)
-      c <- dbGetPreparedQuery(conn = DBconn(), 
-                              "SELECT date, attended, questionAnswered, questionAsked
-                              FROM classParticipation AS s
-                              WHERE s.ID = :ID",
-                              bind.data = ID)
-      attendedSoFar <- sum(unique(c$attended[c$date <= date])) # Number of dates attended to date
-      if (is.numeric(attendanceMethod)) {
-            potentialDates <- attendanceMethod
-      } else {
-            if (attendanceMethod != "toDate") {
-                  warning("Invald attendanceMethod value; defaulting to 'toDate'.")
-            } 
-            potentialDates <- length(unique(c$date[c$date <= date]))
-      }
-      attendanceGrade <- min(attendedSoFar/potentialDates, 1)
-      # Q weighting default: tally answered; mark is % of max answered; alternates: tally both; tally asked; 100% if > y(specified)
+      a <- IDToAttendance(ID, date, attendanceMethod)
       if (questionMethod[1] == "ask") {
-            qs <- sum(c$questionAsked[c$date <= date] != "")
+            q <- IDToQuestionsAsked(ID, date, questionMethod[2])
       } else if (questionMethod[1] == "both") {
-            qs <- sum(c$questionAsked[c$date <= date] != "") + sum(c$questionAnswered[c$date <= date] != "")
+            q <- IDToCombinedQuestions(ID, date, questionMethod[2])
       } else {
             if (questionMethod[1] != "answer") {
                   warning("questionMethod[1] is invalid; defaulting to 'answer'.")
             }
-            qs <- sum(c$questionAnswered[c$date <= date] != "")
+            q <- IDToQuestionsAnswered(ID, date, questionMethod[2])
       }
-
-      qM2 <- as.integer(questionMethod[2])
-      if (!is.na(qM2)) {
-            if (is.integer(qM2)) {
-                  if (qs >=  qM2) {
-                        qGrade <- 1
-                  } else {qGrade <- 0}
-            }
-      } else {
-            if (questionMethod[2] != "percent") {
-                  warning("Invalid questionMethod[2]; defaulting to 'percent'.")
-            }
-            potentialQs <- qs
-            if (questionMethod[1] == "ask") {
-                  allQs <- dbGetQuery(conn = DBconn(),
-                                      "SELECT ID, questionAsked 
-                                      FROM classParticipation as c
-                                      ORDER BY c.ID")
-                  for (i in unique(allQs$ID)) {
-                        currentID <- sum(allQs$questionAsked[allQs$ID == i] != "")
-                        if (currentID > potentialQs) {potentialQs <- currentID}
-                  }
-            } else if (questionMethod[1] == "both") {
-                  allQs <- dbGetQuery(conn = DBconn(),
-                                      "SELECT ID, questionAnswered, questionAsked 
-                                      FROM classParticipation as c
-                                      ORDER BY c.ID")
-                  for (i in unique(allQs$ID)) {
-                        currentID <- sum(allQs$questionAsked[allQs$ID == i] != "") + sum(allQs$questionAnswered[allQs$ID == i] != "")
-                        if (currentID > potentialQs) {
-                              potentialQs <- currentID
-                        }
-                  }            
-            } else {
-                  allQs <- dbGetQuery(conn = DBconn(),
-                                      "SELECT ID, questionAnswered 
-                                      FROM classParticipation as c
-                                      ORDER BY c.ID")
-                  for (i in unique(allQs$ID)) {
-                        currentID <- sum(allQs$questionAnswered[allQs$ID == i] != "")
-                        if (currentID > potentialQs) {
-                              potentialQs <- currentID
-                        }
-                  }     
-            }
-            qGrade <- qs / potentialQs            
-      }
-      return(attendanceGrade * cpWeighting[1] + qGrade * cpWeighting[2])
+      
+      return(a * cpWeighting[1] + q[2] * cpWeighting[2])
 }
 
 # Do it simpler.
