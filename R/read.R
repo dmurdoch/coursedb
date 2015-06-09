@@ -110,7 +110,7 @@ IDToAssignmentMark <- function(ID = 111111111, assignmentNumber = "1") {
       a
       if (length(unique(a$assignmentNumber)) > 2) {stop("Assignment number not unique.")}
       # 2   Return vector: mark, fraction
-      return(c(a[1,1], a[1,1]/a[2,1]))
+      return(c(mark = a[1,1], outOf = a[2,1], fraction = a[1,1]/a[2,1]))
 }
 
 
