@@ -1,11 +1,14 @@
-Package: courseDB
+Package: coursedb
 Type: Package
-Title: What the package does (short line)
-Version: 1.0
-Date: 2015-05-21
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
+Title:  Database, functions to store and access course-related information 
+Version: 0.0.0.9000
+Date: 2015-06-08
+Author: Robert Lee
+Maintainer: Robert Lee <rlee35@uwo.ca>
+Description: Database and functions to store and access course-related 
+             information (students, grades, dates, etc.) 
 License: What license is it under?
 LazyData: TRUE
 Imports: RSQLite
+URL: https://github.com/IskanderBlue/coursedb
+BugReports: https://github.com/IskanderBlue/coursedb/issues
