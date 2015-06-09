@@ -280,10 +280,6 @@ TestMarks <- function(ID = 111111111, date = Sys.Date()) {
       return(tMarks)
 }
 
-# Do it simpler.
-# Different functions for different options.
-# If you want to calculate this way, use this.
-
 # Murdoch: After each test, write script that handles grading, entering into masterspreadsheet.
 
 IDToCurrentGrade <- function(ID = 111111111, totalWeighting = c(0.2, 0, 0.3, 0.5), date = Sys.Date(), cpWeighting = c(0.5, 0.5), attendanceMethod = "toDate", questionMethod = c("answer", "percent")) {
@@ -315,8 +311,7 @@ IDToCurrentGrade <- function(ID = 111111111, totalWeighting = c(0.2, 0, 0.3, 0.5
 
 # What are my notes on this student?
 IDToNotes <- function(ID = 111111111) {
-      df <- as.data.frame(ID)
-      
+      df <- as.data.frame(ID)     
       dbGetPreparedQuery(conn = DBconn(), 
                          "SELECT notes FROM students AS s WHERE s.ID = :ID", 
                          bind.data = df)
