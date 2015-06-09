@@ -249,6 +249,18 @@ IDToClassParticipation <- function(ID = 111111111, date = Sys.Date(), cpWeightin
       return(a * cpWeighting[1] + q[2] * cpWeighting[2])
 }
 
+AssignmentMarks <- function(ID = 111111111, date = Sys.Date()) {
+      a <- readAssignments()
+      uniqueA <- unique(a$assignmentNumber[a$date <= date])
+      aMarks <- matrix(ncol = 2, nrow = length(uniqueA))
+      colnames(aMarks) = c("mark", "outOf")
+      rownames(aMarks) = uniqueA
+      for (i in uniqueA) {
+            aMarks[i,] <- IDToAssignmentMark(ID, i)
+      }
+      aMarks
+}
+
 # Do it simpler.
 # Different functions for different options.
 # If you want to calculate this way, use this.
