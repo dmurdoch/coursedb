@@ -113,6 +113,27 @@ IDToAssignmentMark <- function(ID = 111111111, assignmentNumber = "1") {
       return(c(a[1,1], a[1,1]/a[2,1]))
 }
 
+
+IDToAttendance <- function(ID = 111111111, date = Sys.Date(), attendanceMethod = "toDate") {
+      # Attendance weighting default: % of dates so far attended; otherwise x/y(specified), capped at 1.
+      ID <- as.data.frame(ID)
+      c <- dbGetPreparedQuery(conn = DBconn(), 
+                              "SELECT date, attended 
+                              FROM classParticipation AS c
+                              WHERE c.ID = :ID",
+                              bind.data = ID)
+      attendedSoFar <- sum(unique(c$attended[c$date <= date])) # Number of dates attended to date
+      if (is.numeric(attendanceMethod)) {
+            potentialDates <- attendanceMethod
+      } else {
+            if (attendanceMethod != "toDate") {
+                  warning("Invald attendanceMethod value; defaulting to 'toDate'.")
+            } 
+            potentialDates <- length(unique(c$date[c$date <= date]))
+      }
+      attendanceGrade <- min(attendedSoFar/potentialDates, 1)
+}
+
 # Seperate functions for each kind of participation grade
 # Keep track of attendance: use this function; 
 # Keep track of Q, use this.
@@ -131,8 +152,8 @@ IDToClassParticipation <- function(ID = 111111111, date = Sys.Date(), cpWeightin
                               FROM classParticipation AS s
                               WHERE s.ID = :ID",
                               bind.data = ID)
-      attendedSoFar <- sum(c$attended[c$date <= date]) # Number of dates attended to date
-      if (is.integer(attendanceMethod)) {
+      attendedSoFar <- sum(unique(c$attended[c$date <= date])) # Number of dates attended to date
+      if (is.numeric(attendanceMethod)) {
             potentialDates <- attendanceMethod
       } else {
             if (attendanceMethod != "toDate") {
