@@ -89,7 +89,8 @@ IDAndExamNumberToGrade <- function(ID = 111111111, examNumber = "2") {
                                               && a$answer == ca$answer])) 
                + sum(as.integer(g$grade)))
       outOf <- sum(as.integer(ca$questionValue)) + sum(as.integer(tg$grade))
-      return(c(total, outOf))
+      fraction <- total / outOf
+      return(c(total = total, outOf = outOf, fraction = fraction))
 }
 # Do more in SQL to make more compact;
 # Not seperate answers student/ correct; inner/ outer joins.
@@ -252,8 +253,8 @@ IDToClassParticipation <- function(ID = 111111111, date = Sys.Date(), cpWeightin
 AssignmentMarks <- function(ID = 111111111, date = Sys.Date()) {
       a <- readAssignments()
       uniqueA <- unique(a$assignmentNumber[a$date <= date])
-      aMarks <- matrix(ncol = 2, nrow = length(uniqueA))
-      colnames(aMarks) = c("mark", "outOf")
+      aMarks <- matrix(ncol = 3, nrow = length(uniqueA))
+      colnames(aMarks) = c("mark", "outOf", "fraction")
       rownames(aMarks) = uniqueA
       for (i in uniqueA) {
             aMarks[i,] <- IDToAssignmentMark(ID, i)
@@ -265,13 +266,11 @@ TestMarks <- function(ID = 111111111, date = Sys.Date()) {
       allMC <- readMCAnswers()
       allLF <- readLongformGrades()
       uniqueT <- unique(c(unique(allMC$examNumber[allMC$date <= date])), unique(allLF$examNumber[allLF$date <= date]))
-      tMarks <- matrix(ncol = 2, nrow = length(uniqueT))
-      colnames(tMarks) = c("mark", "outOf")
+      tMarks <- matrix(ncol = 3, nrow = length(uniqueT))
+      colnames(tMarks) = c("mark", "outOf", "fraction")
       rownames(tMarks) = uniqueT
-      uniqueT
-      tMarks
       for (i in uniqueT) {
-            tMarks[i,] <- IDAndExamNumberToGrade(ID, i)
+            tMarks[i, ] <- IDAndExamNumberToGrade(ID, i)
       }
       for (i in nrow(tMarks):1) {
             if (is.na(tMarks[i,2]) || tMarks[i,2] == 0) {
