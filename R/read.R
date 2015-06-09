@@ -34,18 +34,21 @@ readAllInfo <- function(conn = DBconn()) {
       e <- dbGetQuery(conn, "select * from classParticipation")
       return(c(a,b,c,d,e))
 }
-## Name variants!!! LIKE in SQL
-# phonetic matching somehow?
 
-NameToID <- function(givenNames = "jay", lastName = "aye") {
-      df <- as.data.frame(cbind(givenNames, lastName))
-      ID <- dbGetPreparedQuery(conn = DBconn(), 
-                               "SELECT ID FROM students AS s 
-                                    WHERE s.givenNames = :givenNames 
-                                    AND s.lastName = :lastName", 
-                               bind.data = df)
-      if (nrow(ID) != 1) {warning("More than one ID.")}
-      return(ID)
+## Name variants!!! LIKE in SQL?
+# phonetic matching somehow?
+# Used agrep() from R; now finds misspelled names too
+
+NameToID <- function(givenNames = "deedoublenane", lastName = "cee") {
+      IDs <- dbGetQuery(conn = DBconn(), 
+                        "SELECT ID, lastName, givenNames 
+                               FROM students")
+      givenMatch <- agrep(givenNames, IDs$givenNames)
+      lastMatch <- agrep(lastName, IDs$lastName)
+      matchingIDs <- IDs[intersect(givenMatch, lastMatch),]
+      if (nrow(matchingIDs) == 0) {warning("No matching IDs.")}
+      if (nrow(matchingIDs) > 1) {warning("More than one ID.")}
+      return(matchingIDs)
 }
 
 IDAndExamNumberToGrade <- function(ID = 111111111, examNumber = "2") {
