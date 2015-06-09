@@ -60,7 +60,7 @@ IDAndExamNumberToGrade <- function(ID = 111111111, examNumber = "2") {
                                     WHERE m.ID = :ID 
                                     AND m.examNumber = :examNumber",
                               bind.data = df)
-      if (length(unique(a$examCode)) > 1) {warning("Exam code not unique.")}
+      if (length(unique(a$examCode)) > 1) {warning("Exam code not unique.")}      
       g <- dbGetPreparedQuery(conn = DBconn(),
                               "SELECT grade, questionNumber, examCode 
                                     FROM longformGrades AS l 
@@ -95,28 +95,23 @@ IDAndExamNumberToGrade <- function(ID = 111111111, examNumber = "2") {
 # Not seperate answers student/ correct; inner/ outer joins.
 
 
-
+# Shortened function by doubling u on SQL query
 IDToAssignmentMark <- function(ID = 111111111, assignmentNumber = "1") {
       # 1   Match ID and assignmentNumber to score (from assignments table)
+      #     and get full score for assignment
       df <- as.data.frame(cbind(ID, assignmentNumber))
       a <- dbGetPreparedQuery(conn = DBconn(),
-                              "SELECT grade FROM assignments AS a 
+                              "SELECT grade, ID FROM assignments AS a 
                                     WHERE a.ID = :ID 
+                                    AND a.assignmentNumber = :assignmentNumber
+                                    OR a.ID = 999999999
                                     AND a.assignmentNumber = :assignmentNumber",
                               bind.data = df)
-      if (length(unique(a$assignmentNumber)) > 1) {warning("Assignment number not unique.")}
-      # 2   Match assignmentNumber to potential score
-      df <- as.data.frame(assignmentNumber)
-      ps <- dbGetPreparedQuery(conn = DBconn(),
-                               "SELECT grade FROM assignments AS a 
-                                    WHERE a.ID = 999999999 
-                                    AND a.assignmentNumber = :assignmentNumber",
-                               bind.data = df)
-      if (length(unique(a$assignmentNumber)) > 1) {warning("Assignment number not unique.")}
-      # 3   Return vector: mark, fraction
-      return(c(a[1,1], ps[1,1]))
+      a
+      if (length(unique(a$assignmentNumber)) > 2) {stop("Assignment number not unique.")}
+      # 2   Return vector: mark, fraction
+      return(c(a[1,1], a[1,1]/a[2,1]))
 }
-# JOin queries
 
 # Seperate functions for each kind of participation grade
 # Keep track of attendance: use this function; 
