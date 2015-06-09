@@ -134,6 +134,37 @@ IDToAttendance <- function(ID = 111111111, date = Sys.Date(), attendanceMethod =
       attendanceGrade <- min(attendedSoFar/potentialDates, 1)
 }
 
+IDToQuestionsAsked <- function(ID = 111111111, date = Sys.Date(), evalMethod = "percent") {
+      #     Default evaluation method:
+      #     Find the maximum number of questions asked.  
+      #     Find the percentage of that maximum that the given ID asked. 
+      #     Alternate: 100% if >= evalMethod (a number) questions were asked.
+      ID <- as.data.frame(ID)
+      c <- dbGetPreparedQuery(conn = DBconn(), 
+                              "SELECT date, questionAsked
+                              FROM classParticipation AS c
+                              WHERE c.ID = :ID",
+                              bind.data = ID)
+      qs <- sum(c$questionAsked[c$date <= date] != "")
+      if (is.numeric(evalMethod)) {
+            qGrade <- c(questionsAsked = qs, mark = 0, threshold = evalMethod)
+            if (qs >= evalMethod) {qGrade[2] <- 1} 
+      } else {
+            if (evalMethod != "percent") {warning("Invalid evalMethod; defaulting to 'percent'.")}
+            allQs <- dbGetQuery(conn = DBconn(),
+                                "SELECT ID, questionAsked 
+                                FROM classParticipation as c
+                                ORDER BY c.ID")
+            potentialQs <- qs
+            for (i in unique(allQs$ID)) {
+                  currentID <- sum(allQs$questionAsked[allQs$ID == i] != "")
+                  if (currentID > potentialQs) {potentialQs <- currentID}
+            }
+            qGrade <- c(questionsAsked = qs, percentage = qs/potentialQs)
+      }
+      return(qGrade)
+}
+
 # Seperate functions for each kind of participation grade
 # Keep track of attendance: use this function; 
 # Keep track of Q, use this.
@@ -178,8 +209,8 @@ IDToClassParticipation <- function(ID = 111111111, date = Sys.Date(), cpWeightin
       if (!is.na(qM2)) {
             if (is.integer(qM2)) {
                   if (qs >=  qM2) {
-                        qGrade == 1
-                  } else {qGrade == 0}
+                        qGrade <- 1
+                  } else {qGrade <- 0}
             }
       } else {
             if (questionMethod[2] != "percent") {
